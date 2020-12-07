@@ -1,0 +1,34 @@
+!*.jar
+
+target/maven-archiver
+target/maven-status
+target/archive-tmp
+target/classes
+target/generated-sources
+# 不忽略含以下后缀的文件（而这一步是把上面文件夹中，指定类型的文件设为不忽略）
+!*.cpp
+!*.py
+!*.java
+!*.txt
+!*.md
+!*.png
+!*.pdf
+!*.zip
+!*.jpeg
+!*.jpg
+!*.html
+!*.docx
+!*.tex
+!*.ipynb
+!*.jar
+!target/*.jar
+# !第五周 wordCount编程/target/*.jar
+
+.DS_Store
+
+# Intellij
+*.iml
+*.idea
+.idea
+.idea/
+.iml
