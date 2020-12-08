@@ -18,11 +18,11 @@ public class MerchantGrilLoveApplication {
     public static void main(String[] args) throws Exception {
 //        String inputPath = args[0];
 //        String outputPath = args[1];
-        String inputPath = "D:\\data\\data_format1\\data_format1\\user_log_format1.csv";
-        String outputPath = "D:\\data\\data_format1\\data_format1\\love_out";
+        String inputPath = "data_format1/user_log_format1.csv";
+        String outputPath = "data_format1/love_out";
         Configuration configuration = new Configuration();
         Job job = Job.getInstance(configuration);
-        job.addCacheFile(new URI("file:///D:/data/data_format1/data_format1/user_info_format1.csv"));
+        job.addCacheFile(new URI("file:///data_format1/user_info_format1.csv"));
         FileInputFormat.addInputPath(job, new Path(inputPath));//输入目录
         FileOutputFormat.setOutputPath(job, new Path(outputPath));//输出目录
 

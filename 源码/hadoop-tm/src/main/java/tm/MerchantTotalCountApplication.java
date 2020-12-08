@@ -16,8 +16,8 @@ public class MerchantTotalCountApplication {
     public static void main(String[] args) throws Exception {
 //        String inputPath = args[0];
 //        String outputPath = args[1];
-        String inputPath = "D:\\data\\data_format1\\data_format1\\user_log_format1.csv";
-        String outputPath = "D:\\data\\data_format1\\data_format1\\merchants_out";
+        String inputPath = "data_format1/user_log_format1.csv";
+        String outputPath = "data_format1/merchants_out";
         Configuration configuration = new Configuration();
         Job job = Job.getInstance(configuration);
 

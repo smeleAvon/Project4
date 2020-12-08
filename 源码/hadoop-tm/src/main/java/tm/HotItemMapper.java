@@ -21,7 +21,7 @@ public class HotItemMapper extends Mapper<LongWritable, Text, Text, IntWritable>
         }
         String[] word_array = line.split(",");
         if (word_array.length != 7 || !word_array[5].equals("1111")) {
-            //过滤不正常的数据
+            //过滤不正常的数据和非双十一的数据
             return;
         }
         String action_type = word_array[6];
@@ -32,7 +32,5 @@ public class HotItemMapper extends Mapper<LongWritable, Text, Text, IntWritable>
         String item_id = word_array[1];
         //统计商品id 和数量即可
         context.write(new Text(item_id), new IntWritable(1));
-
     }
-
 }
