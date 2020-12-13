@@ -1,8 +1,12 @@
 # 实验四 实验报告
 
-181830187 王宇烽
+*181830187 王宇烽*
 
-* [x] 12.06更新：使用数据集的局部做测试，作业1～3程序做完，Debug结束
+* [x] 12.06更新：使用数据集的局部做测试，项目1～3程序做完，Debug结束
+* [x] 12.08更新：实验报告v1.0
+* [x] 12.10更新：项目4使用自己的算法参加比赛，实时排名100
+* [x] 12.12更新：项目4用spark做完，实验报告写完，实时排名101
+* [ ] 下周目标：提高排名
 
 ---
 
@@ -24,17 +28,17 @@
 > > >
 > > > hadoop_test0-1.0-SNAPSHOT.jar（maven打包的jar包）
 > >
-> > py-tianmao
+> > spark_q2.py（第一部分的spark部分和第二部分）
 > >
-> > > q2.py（第一部分的spark部分和第二部分）
-> > >
-> > > q3.py（第三部分）
-> > >
-> > > spark-warehouse（空）
+> > spark_q3.py（第三部分）
+> >
+> > spark_predict.py（第四部分）
+> >
+> > ML_predict.ipynb（用其他的算法预测）
 >
 > **运行结果**
 >
-> > hadoop打印输出
+> > **hadoop打印输出**
 > >
 > > > age_30_top_merchant_result.csv 最受年轻人(age<30)关注的商家
 > > >
@@ -53,6 +57,15 @@
 > > > age_result.csv 统计购买了商品的买家年龄段的比例
 > > >
 > > > boy_girl_result.csv 统计双十一购买了商品的男女比例
+> > >
+> > > sparkML_predict.csv用spark的MLlib进行预测的结果
+> > >
+> >
+> > python其他算法预测结果
+> >
+> > > XGBoost_prediction.csv 使用XGBoost算法计算预测的结果
+> > >
+> > > lightGBM_predict.csv 使用lightGBM算法计算预测的结果
 
 ---
 
@@ -328,8 +341,197 @@ spark.sql(
 
 
 四、预测给定的商家中，哪些新消费者在未来会成为忠实客户，即需要预测这些新消费者在6个⽉月内再
-次购买的概率。基于Spark MLlib编写程序预测回头客，评估实验结果的准确率。
+次购买的概率。基于**Spark MLlib**编写程序预测回头客，评估实验结果的准确率。
 
+1. 选用两种简单的机器学习算法：
+
+   SVMWithSGD.train和DecisionTree.trainClassifier来练习spark下MLlib的学习
+
+   思路：数据清洗--构建机器学习算法模型--预测
+
+   具体执行的流程如下：
+   
+   - 首先，加载数据，并选择label
+   
+   ```python
+       conf = SparkConf().setMaster("local[*]").setAppName("tianmao")
+       sc = SparkContext(conf=conf)
+       sc.setLogLevel("warn")
+       user_map = load_user_map(sc)
+       # 加载训练数据
+       train_data = load_train_data(sc)
+       # 设置数据的用户信息数据
+       train_data_user_info = set_train_user_info(train_data, user_map)
+       # user_id  merchant_id age_range gender label
+    train_data_user_info.cache()
+       stand_train_data_user_info = train_data_user_info.map(lambda user: user[0:4])
+    stand_train_data_user_info_label = train_data_user_info.map(lambda user: user[4])
+   ```
+	
+   - 第二步，训练数据标准化，并构建标签进行训练模型
+   
+   ```python
+   	#训练数据标准化
+       std_scaler = StandardScaler(True, True).fit(stand_train_data_user_info)
+       stand_train_data_user_info = std_scaler.transform(stand_train_data_user_info)
+       
+       train_data_user_info = stand_train_data_user_info_label.zip(stand_train_data_user_info)
+       # 构建标签数据
+       train_data_user_info = build_point(train_data_user_info)
+       numIterations = 100
+   
+       train_data_user_info.cache()
+       
+       #训练模型
+       model = SVMWithSGD.train(train_data_user_info, numIterations)
+       #model = DecisionTree.trainClassifier(train_data_user_info,numIterations,2,{})
+   
+   ```
+   
+   
+   - 第三步，加载测试数据
+   ```python
+    	# 加载测试数据
+    test_data = load_test_data(sc)
+    # 设置数据的用户信息数据
+    test_data_user_info = set_test_user_info(test_data, user_map)
+    test_data_user_info.cache()
+    
+    # 测试数据标准化
+    std_scaler = StandardScaler(True, True).fit(test_data_user_info)
+    stand_test_data_user_info = std_scaler.transform(test_data_user_info)
+    
+    # 构建标签数据
+    test_data_user_info = test_data_user_info.map(lambda user: user[0:2]).zip(build_vectors(stand_test_data_user_info))
+   
+   ```
+   
+   - 第四步，进行预测并输出结果
+   ```python
+   		# 进行预测
+       #对test数据进行预测
+       predict_data = test_data_user_info.map(lambda user: ((user[0][0], user[0][1]), model.predict(user[1])))
+       #对训练集数据进行预测
+       predict_self_data = train_data_user_info.map(
+           lambda x: (x.features.values[0], x.features.values[1], x.label, model.predict(x.features)))
+   
+       # 计算准确率
+       total_num = predict_self_data.count()
+       correct_num = predict_self_data.filter(lambda x: float(x[2]) == float(x[3])).count()
+       print("准确率:%s" % (correct_num / float(total_num)))
+   ```
+   
+
+
+
+![image-20201213164014047](截图/5.png)
+
+
+
+2. 自己学习的机器学习算法预测
+
+思路：数据清洗--特征挖掘--机器学习算法预测
+
+```python
+# 读取数据的部分略去
+
+# 一、数据清洗
+train_data1['origin'] = 'train'
+submission['origin'] = 'test'
+matrix = pd.concat([train_data1, submission], ignore_index=True, sort=False)
+matrix.drop(['prob'], axis=1, inplace=True)
+# 连接user_info表，通过user_id关联
+matrix = matrix.merge(user_info, on='user_id', how='left')
+# 使用merchant_id（原列名seller_id）
+user_log.rename(columns={'seller_id':'merchant_id'}, inplace=True)
+
+# 格式化
+user_log['user_id'] = user_log['user_id'].astype('int32')
+user_log['merchant_id'] = user_log['merchant_id'].astype('int32')
+user_log['item_id'] = user_log['item_id'].astype('int32')
+user_log['cat_id'] = user_log['cat_id'].astype('int32')
+user_log['brand_id'].fillna(0, inplace=True)
+user_log['brand_id'] = user_log['brand_id'].astype('int32')
+user_log['time_stamp'] = pd.to_datetime(user_log['time_stamp'], format='%m%d')
+user_log['month'] = user_log['time_stamp'].astype(str).str[5:7]
+# user_log['time_stamp'] = pd.to_datetime(user_log['time_stamp'], format='%H%M')
+# 1 for <18; 2 for [18,24]; 3 for [25,29]; 4 for [30,34]; 5 for [35,39]; 6 for [40,49]; 7 and 8 for >= 50; 0 and NULL for unknown
+matrix['age_range'].fillna(0, inplace=True)
+# 0:female, 1:male, 2:unknown
+matrix['gender'].fillna(2, inplace=True)
+matrix['age_range'] = matrix['age_range'].astype('int8')
+matrix['gender'] = matrix['gender'].astype('int8')
+matrix['label'] = matrix['label'].astype('str')
+matrix['user_id'] = matrix['user_id'].astype('int32')
+matrix['merchant_id'] = matrix['merchant_id'].astype('int32')
+del user_info, train_data1
+gc.collect()
+```
+
+
+
+```python
+# 二、特征工程（最为重要，还在补充特征）
+选取指标：主要是针对<UserID, MerchantID>的pair，
+首先，针对每个user，挖掘出过去六个月中购买记录
+其次，针对每个merchant，挖掘出过去六个月商家被交互的user_id, item_id, cat_id, brand_id 唯一值
+最后，按照user_id, merchant_id分组，统计行为个数，item_id, cat_id, brand_id唯一个数等特征
+```
+
+
+
+```python
+# 三、模型训练
+1. 使用XGBoost
+# # 使用XGBoost
+# model = xgb.XGBClassifier(
+#     max_depth=8,
+#     n_estimators=1000,
+#     min_child_weight=300, 
+#     colsample_bytree=0.8, 
+#     subsample=0.8, 
+#     eta=0.3,    
+#     seed=42     
+# )
+# model.fit(
+#     X_train, y_train,
+#     eval_metric='auc', 
+#     eval_set=[(X_train, y_train), (X_valid, y_valid)],
+#     verbose=True,
+#     #早停法，如果auc在10epoch没有进步就stop
+#     early_stopping_rounds=10 
+# )
+# model.fit(X_train, y_train)
+# 准确度 0.6791504 
+
+2. 使用lightGBM
+import lightgbm as lgb
+# 使用LightGBM模型
+model = lgb.LGBMClassifier(
+    num_leaves=51,
+    max_depth=10,
+    boosting_type='gbdt',
+    objective='binary',
+    learning_rate=0.015,
+    n_estimators=2000,
+    subsample=0.75,
+    subsample_freq=2,
+    reg_lambda=0.28,
+    reg_alpha=0.12,
+    colsample_bytree=0.8,
+    min_child_samples=300,
+    min_split_gain=0.1
+)
+model.fit(
+    X_train, y_train,
+    eval_set=[(X_train, y_train), (X_valid, y_valid)],
+    eval_metric='auc', 
+    early_stopping_rounds=100
+)
+# 准确度 0.6826410
+```
+
+可以看出lightGBM可以提高预测的准确度
 
 
 
