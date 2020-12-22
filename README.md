@@ -7,6 +7,7 @@
 * [x] 12.10更新：项目4使用自己的算法参加比赛，成绩0.6826410，实时排名100
 * [x] 12.12更新：项目4用spark做完，实验报告写完，成绩0.6826410，实时排名101
 * [x] 12.14更新：成绩0.6881123，排名42
+* [x] 12.22更新：成绩0.6901808，排名34
 * [ ] 下周目标：提高排名
 
 ---
@@ -538,9 +539,10 @@ model.fit(
 
 3. 成绩总结
 
-   <img src="截图/6.png" alt="image-20201214094947920" style="zoom:50%;" />
+   <img src="/Users/Yufeng1/Desktop/demo/Project4/截图/8.png" alt="image-20201222161843193" style="zoom:50%;" />
 
-<img src="截图/7.png" alt="image-20201214095039896" style="zoom: 43%;" />
+![image-20201222161935104](/Users/Yufeng1/Desktop/demo/Project4/截图/9.png)
+
 
 
 五、问题总结
